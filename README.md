@@ -87,16 +87,25 @@ CRUD_sample/
 ├── .github/
 │   └── workflows/
 │       └── claude.yml   # GitHub Actions ワークフロー
-├── index.html           # アプリ本体（HTML / CSS / JavaScript）
+├── css/
+│   └── style.css        # スタイル定義
+├── js/
+│   └── app.js           # CRUD 処理（JavaScript）
+├── index.html           # 画面のマークアップ
 └── README.md            # 本ファイル
 ```
 
+HTML（構造）・CSS（見た目）・JavaScript（振る舞い）をファイル単位で分離しています。
+`index.html` からは `css/style.css` と `js/app.js` を読み込みます。
+
 ## 実装メモ
 
-- データは `index.html` 内の `users` 配列（メモリ上）で保持しています。
+- データは `js/app.js` 内の `users` 配列（メモリ上）で保持しています。
   **ページを再読み込みすると初期データに戻ります。**
 - ID は `nextId` による連番で採番しています。
 - 編集中かどうかは `editingId` で管理し、`null` の場合は新規登録として扱います。
+- 一覧の「編集」「削除」ボタンは `data-action` / `data-id` 属性を付与し、
+  `tbody` へのイベント委譲で処理しています（HTML 側に JavaScript を記述しないため）。
 
 主な関数は以下のとおりです。
 

@@ -1,0 +1,71 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 30px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+h1 {
+    margin-top: 0;
+}
+
+.form-area {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.form-area input {
+    padding: 8px;
+    flex: 1;
+}
+
+button {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+th {
+    background-color: #f0f0f0;
+}
+
+.action-buttons button {
+    margin-right: 5px;
+}
+
+.edit-btn {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+}
+
+.delete-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+}
+
+.save-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+}
