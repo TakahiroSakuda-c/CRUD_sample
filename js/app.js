@@ -1,131 +1,89 @@
-// 初期データ
-let users = [
-    {
-        id: 1,
-        name: "山田 太郎",
-        email: "yamada@example.com"
-    },
-    {
-        id: 2,
-        name: "鈴木 花子",
-        email: "suzuki@example.com"
-    },
-    {
-        id: 3,
-        name: "佐藤 次郎",
-        email: "sato@example.com"
-    },
-    {
-        id: 4,
-        name: "高橋 美咲",
-        email: "takahashi@example.com"
-    },
-    {
-        id: 5,
-        name: "伊藤 健",
-        email: "ito@example.com"
-    }
-];
+// 画面（DOM）と CRUD ロジック（js/userStore.js）をつなぐ層。
+// データ操作そのものは UserStore 側に持たせている。
+(function () {
+    "use strict";
 
-let nextId = 6;
-let editingId = null;
+    const store = window.UserStore.createUserStore();
 
-function renderTable() {
-    const tbody = document.getElementById("userTableBody");
-    tbody.innerHTML = "";
-
-    users.forEach(user => {
-        const row = document.createElement("tr");
-
-        row.innerHTML = `
-            <td>${user.id}</td>
-            <td>${user.name}</td>
-            <td>${user.email}</td>
-            <td class="action-buttons">
-                <button class="edit-btn" data-action="edit" data-id="${user.id}">編集</button>
-                <button class="delete-btn" data-action="delete" data-id="${user.id}">削除</button>
-            </td>
-        `;
-
-        tbody.appendChild(row);
-    });
-}
-
-function saveUser() {
     const nameInput = document.getElementById("name");
     const emailInput = document.getElementById("email");
+    const saveButton = document.getElementById("saveButton");
+    const tbody = document.getElementById("userTableBody");
 
-    const name = nameInput.value.trim();
-    const email = emailInput.value.trim();
-
-    if (!name || !email) {
-        alert("氏名とメールアドレスを入力してください。");
-        return;
+    function clearForm() {
+        nameInput.value = "";
+        emailInput.value = "";
     }
 
-    if (editingId === null) {
-        users.push({
-            id: nextId++,
-            name: name,
-            email: email
-        });
-    } else {
-        const user = users.find(u => u.id === editingId);
+    function updateSaveButtonLabel() {
+        saveButton.textContent = store.isEditing() ? "更新" : "登録";
+    }
 
-        if (user) {
-            user.name = name;
-            user.email = email;
+    function renderTable() {
+        tbody.innerHTML = "";
+
+        store.getUsers().forEach(user => {
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${user.id}</td>
+                <td>${user.name}</td>
+                <td>${user.email}</td>
+                <td class="action-buttons">
+                    <button class="edit-btn" data-action="edit" data-id="${user.id}">編集</button>
+                    <button class="delete-btn" data-action="delete" data-id="${user.id}">削除</button>
+                </td>
+            `;
+
+            tbody.appendChild(row);
+        });
+    }
+
+    function saveUser() {
+        const result = store.save(nameInput.value, emailInput.value);
+
+        if (!result.ok) {
+            alert(result.error);
+            return;
         }
 
-        editingId = null;
-        document.getElementById("saveButton").textContent = "登録";
+        clearForm();
+        updateSaveButtonLabel();
+        renderTable();
     }
 
-    nameInput.value = "";
-    emailInput.value = "";
+    function editUser(id) {
+        const user = store.startEdit(id);
 
-    renderTable();
-}
+        if (!user) {
+            return;
+        }
 
-function editUser(id) {
-    const user = users.find(u => u.id === id);
+        nameInput.value = user.name;
+        emailInput.value = user.email;
 
-    if (!user) {
-        return;
+        updateSaveButtonLabel();
     }
 
-    document.getElementById("name").value = user.name;
-    document.getElementById("email").value = user.email;
+    function deleteUser(id) {
+        if (!confirm("削除しますか？")) {
+            return;
+        }
 
-    editingId = id;
-    document.getElementById("saveButton").textContent = "更新";
-}
+        const result = store.remove(id);
 
-function deleteUser(id) {
-    if (!confirm("削除しますか？")) {
-        return;
+        if (result.editingCancelled) {
+            clearForm();
+            updateSaveButtonLabel();
+        }
+
+        renderTable();
     }
 
-    users = users.filter(user => user.id !== id);
+    saveButton.addEventListener("click", saveUser);
 
-    if (editingId === id) {
-        editingId = null;
-        document.getElementById("name").value = "";
-        document.getElementById("email").value = "";
-        document.getElementById("saveButton").textContent = "登録";
-    }
-
-    renderTable();
-}
-
-document
-    .getElementById("saveButton")
-    .addEventListener("click", saveUser);
-
-// 一覧の編集・削除ボタンはイベント委譲で処理する
-document
-    .getElementById("userTableBody")
-    .addEventListener("click", event => {
+    // 一覧の編集・削除ボタンはイベント委譲で処理する
+    tbody.addEventListener("click", event => {
         const button = event.target.closest("button[data-action]");
 
         if (!button) {
@@ -141,4 +99,5 @@ document
         }
     });
 
-renderTable();
+    renderTable();
+})();

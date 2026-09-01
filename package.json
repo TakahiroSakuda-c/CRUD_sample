@@ -1,0 +1,10 @@
+{
+  "name": "crud-sample",
+  "version": "1.0.0",
+  "description": "社員情報の CRUD を行うシンプルなサンプルアプリケーション",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "license": "UNLICENSED"
+}

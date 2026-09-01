@@ -10,6 +10,7 @@ HTML / CSS / JavaScript のみで構成されており、ビルドやサーバ�
 - [機能](#機能)
 - [動作環境](#動作環境)
 - [使い方](#使い方)
+- [テスト](#テスト)
 - [ディレクトリ構成](#ディレクトリ構成)
 - [実装メモ](#実装メモ)
 - [今後の課題](#今後の課題)
@@ -80,39 +81,80 @@ python3 -m http.server 8000
 3. 内容を修正して **更新** ボタンを押すと反映されます。
 4. **削除** ボタンを押し、確認ダイアログで OK を選ぶと削除されます。
 
+## テスト
+
+CRUD ロジック（`js/userStore.js`）の単体テストを用意しています。
+テストフレームワークは **Node.js 標準のテストランナー**（`node:test` / `node:assert`）を使用しており、
+**インストールが必要な依存パッケージはありません**。
+
+```bash
+npm test
+```
+
+`npm` を使わずに直接実行することもできます。
+
+```bash
+node --test test/
+```
+
+- 必要な環境: Node.js 18 以上（`node --test` が安定版として利用できるバージョン）
+- テスト対象: `js/userStore.js`（Create / Read / Update / Delete とバリデーション）
+- DOM 操作を行う `js/app.js` はロジックを持たない薄い層のため、テスト対象外としています。
+
 ## ディレクトリ構成
 
 ```text
 CRUD_sample/
 ├── .github/
 │   └── workflows/
-│       └── claude.yml   # GitHub Actions ワークフロー
+│       └── claude.yml       # GitHub Actions ワークフロー
 ├── css/
-│   └── style.css        # スタイル定義
+│   └── style.css            # スタイル定義
 ├── js/
-│   └── app.js           # CRUD 処理（JavaScript）
-├── index.html           # 画面のマークアップ
-└── README.md            # 本ファイル
+│   ├── userStore.js         # CRUD ロジック（DOM 非依存）
+│   └── app.js               # 画面との配線（DOM 操作）
+├── test/
+│   └── userStore.test.js    # userStore.js の単体テスト
+├── index.html               # 画面のマークアップ
+├── package.json             # テスト実行用スクリプト（依存パッケージなし）
+└── README.md                # 本ファイル
 ```
 
 HTML（構造）・CSS（見た目）・JavaScript（振る舞い）をファイル単位で分離しています。
-`index.html` からは `css/style.css` と `js/app.js` を読み込みます。
+さらに JavaScript は「CRUD ロジック（`userStore.js`）」と「DOM 操作（`app.js`）」に分けています。
+`index.html` からは `css/style.css` と、`js/userStore.js` → `js/app.js` の順に読み込みます。
 
 ## 実装メモ
 
-- データは `js/app.js` 内の `users` 配列（メモリ上）で保持しています。
+- データは `js/userStore.js` 内の `users` 配列（メモリ上）で保持しています。
   **ページを再読み込みすると初期データに戻ります。**
-- ID は `nextId` による連番で採番しています。
+- ID は既存データの最大値 + 1 から始まる連番で採番しています。削除しても ID は再利用されません。
 - 編集中かどうかは `editingId` で管理し、`null` の場合は新規登録として扱います。
 - 一覧の「編集」「削除」ボタンは `data-action` / `data-id` 属性を付与し、
   `tbody` へのイベント委譲で処理しています（HTML 側に JavaScript を記述しないため）。
+- `js/userStore.js` は DOM に依存せず、ブラウザでは `window.UserStore`、
+  Node.js では `module.exports` として公開されるため、そのまま単体テストできます。
 
-主な関数は以下のとおりです。
+### `js/userStore.js`（CRUD ロジック）
+
+`createUserStore(initialUsers)` でストアを生成します。`initialUsers` を省略すると初期データを使用します。
+
+| メソッド | 役割 |
+| --- | --- |
+| `getUsers()` | 一覧を取得する（コピーを返す） |
+| `getUser(id)` | 対象データを取得する。存在しなければ `null` |
+| `getEditingId()` / `isEditing()` | 編集状態を取得する |
+| `save(name, email)` | 登録 / 更新を行う。未入力なら `{ ok: false, error }` を返す |
+| `startEdit(id)` | 編集モードにする。存在しなければ `null` を返す |
+| `cancelEdit()` | 編集モードを解除する |
+| `remove(id)` | 対象データを削除する |
+
+### `js/app.js`（画面との配線）
 
 | 関数 | 役割 |
 | --- | --- |
 | `renderTable()` | 一覧テーブルを再描画する |
-| `saveUser()` | 新規登録 / 更新を行う |
+| `saveUser()` | 入力値をストアに渡し、結果を画面へ反映する |
 | `editUser(id)` | 対象データを入力欄に読み込み、編集モードにする |
 | `deleteUser(id)` | 確認のうえ対象データを削除する |
 
